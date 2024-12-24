@@ -1,120 +1,117 @@
+package snake;
+import java.util.*;
+import java.util.regex.*;
+
 public class SemanticAnalyzer {
-    private String[] declaredVariables = new String[100];
-    private int varCount = 0;
+    private final Map<String, String> variableTypes = new HashMap<>(); // Stockage des types des variables déclarées
+    private final Pattern intPattern = Pattern.compile("\\d+"); // Pattern pour les entiers
+    private final Pattern realPattern = Pattern.compile("\\d+\\.\\d+"); // Pattern pour les réels
+    private final Pattern stringPattern = Pattern.compile("\"[^\"]*\""); // Pattern pour les chaînes
+    private final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*"); // Identificateur valide
 
     public String analyze(String code) {
-        StringBuilder result = new StringBuilder("Resultat de l'analyse semantique :\n");
-        String[] lines = code.split("\\n");
-
-        boolean programStarted = false;
-        boolean programEnded = false;
-        boolean hasErrors = false;
+        StringBuilder result = new StringBuilder("Semantic Analysis Result:\n");
+        String[] lines = code.split("\n");
 
         for (String line : lines) {
-            String trimmedLine = line.trim();
-
-            if (trimmedLine.equals("Snk_Begin")) {
-                if (programStarted) {
-                    result.append("Erreur: Le programme a deja commence\n");
-                    hasErrors = true;
-                } else {
-                    programStarted = true;
-                    result.append("Debut du programme detecte\n");
-                }
-            } else if (trimmedLine.equals("Snk_End")) {
-                if (!programStarted) {
-                    result.append("Erreur: Le programme doit commencer par Snk_Begin\n");
-                    hasErrors = true;
-                }
-                if (programEnded) {
-                    result.append("Erreur: Le programme a deja ete termine\n");
-                    hasErrors = true;
-                } else {
-                    programEnded = true;
-                    result.append("Fin du programme detectee\n");
-                }
-            } else if (trimmedLine.startsWith("Snk_Int") || trimmedLine.startsWith("Snk_Real")) {
-                String[] parts = trimmedLine.split("\\s+");
-                if (parts.length < 2) {
-                    result.append("Erreur: La declaration doit contenir un type suivi d'un identificateur.\n");
-                    hasErrors = true;
-                } else {
-                    String type = parts[0];
-                    String[] identifiers = parts[1].split(",");
-                    for (String identifier : identifiers) {
-                        if (isDeclared(identifier)) {
-                            result.append("Erreur: La variable '").append(identifier).append("' est deja declaree.\n");
-                            hasErrors = true;
-                        } else {
-                            declaredVariables[varCount++] = identifier;
-                            result.append("Declaration de ").append(type).append(" detectee : ").append(identifier).append("\n");
-                        }
-                    }
-                }
-            } else if (trimmedLine.startsWith("Set")) {
-                String[] parts = trimmedLine.split("\\s+");
-                if (parts.length != 3) {
-                    result.append("Erreur de syntaxe dans l'affectation : ").append(trimmedLine).append("\n");
-                    hasErrors = true;
-                } else {
-                    String variable = parts[1];
-                    String value = parts[2];
-
-                    if (!isDeclared(variable)) {
-                        result.append("Erreur: Variable '").append(variable).append("' utilisee avant declaration.\n");
-                        hasErrors = true;
-                    } else {
-                        if (value.matches("[0-9]+") || value.matches("[0-9]+\\.[0-9]+")) {
-                            result.append("Affectation valide : ").append(trimmedLine).append("\n");
-                        } else {
-                            result.append("Erreur: Valeur non valide pour la variable '").append(variable).append("'.\n");
-                            hasErrors = true;
-                        }
-                    }
-                }
-            } else if (trimmedLine.equals("# fin d’instruction")) {
-                result.append("Fin d'instruction detectee\n");
-            } else {
-                result.append("Ligne inconnue ou semantiquement incorrecte : ").append(trimmedLine).append("\n");
-                hasErrors = true;
+            line = line.trim();
+            if (line.startsWith("Snk_Int") || line.startsWith("Snk_Real") || line.startsWith("Snk_Strg")) {
+                handleDeclaration(line, result);
+            } else if (line.startsWith("Set")) {
+                handleAssignment(line, result);
+            } else if (line.startsWith("Get")) {
+                handleGet(line, result);
+            } else if (line.startsWith("Snk_Print")) {
+                handlePrint(line, result);
             }
-        }
-
-        if (!programEnded) {
-            result.append("Erreur: Le programme doit se terminer par Snk_End.\n");
-            hasErrors = true;
-        }
-
-        if (hasErrors) {
-            result.append("Le programme contient des erreurs semantiques.\n");
-        } else {
-            result.append("Le programme est semantiquement correct.\n");
         }
 
         return result.toString();
     }
 
-    private boolean isDeclared(String variable) {
-        for (int i = 0; i < varCount; i++) {
-            if (declaredVariables[i].equals(variable)) {
-                return true;
+    private void handleDeclaration(String line, StringBuilder result) {
+        String type;
+        if (line.startsWith("Snk_Int")) {
+            type = "int";
+        } else if (line.startsWith("Snk_Real")) {
+            type = "real";
+        } else if (line.startsWith("Snk_Strg")) {
+            type = "string";
+        } else {
+            result.append("Error: Invalid declaration syntax. Line: ").append(line).append("\n");
+            return;
+        }
+
+        String[] parts = line.substring(line.indexOf(' ')).split(",");
+        for (String part : parts) {
+            String identifier = part.trim().replace("#", "").trim();
+            if (identifierPattern.matcher(identifier).matches()) {
+                if (!variableTypes.containsKey(identifier)) {
+                    variableTypes.put(identifier, type);
+                    result.append("Declaration detected: ").append(identifier).append(" as ").append(type).append("\n");
+                } else {
+                    result.append("Error: Variable ").append(identifier).append(" is already declared. Line: ").append(line).append("\n");
+                }
+            } else {
+                result.append("Error: Invalid identifier '").append(identifier).append("' in declaration. Line: ").append(line).append("\n");
             }
         }
-        return false;
     }
 
-    public static void main(String[] args) {
-        SemanticAnalyzer analyzer = new SemanticAnalyzer();
-        
-        String testCode = "Snk_Begin\n" +
-                          "Snk_Int x,y\n" +
-                          "# fin d’instruction\n" +
-                          "Set x 10\n" +
-                          "Set y 20\n" +
-                          "Snk_End";
-        
-        String result = analyzer.analyze(testCode);
-        System.out.println(result);
+    private void handleAssignment(String line, StringBuilder result) {
+        String[] parts = line.split(" ");
+        if (parts.length < 3) {
+            result.append("Error: Invalid assignment syntax. Line: ").append(line).append("\n");
+            return;
+        }
+
+        String variable = parts[1];
+        String value = parts[2].replace("#", "").trim();
+
+        if (!variableTypes.containsKey(variable)) {
+            result.append("Error: Variable '").append(variable).append("' is not declared before assignment. Line: ").append(line).append("\n");
+            return;
+        }
+
+        String type = variableTypes.get(variable);
+
+        if ((type.equals("int") && intPattern.matcher(value).matches()) ||
+            (type.equals("real") && realPattern.matcher(value).matches()) ||
+            (type.equals("string") && stringPattern.matcher(value).matches())) {
+            result.append("Assignment detected: ").append(variable).append(" = ").append(value).append("\n");
+        } else {
+            result.append("Error: Type mismatch in assignment. Expected ").append(type).append(" but got '").append(value).append("'. Line: ").append(line).append("\n");
+        }
+    }
+
+    private void handleGet(String line, StringBuilder result) {
+        String[] parts = line.split(" ");
+        if (parts.length < 4 || !parts[2].equals("from")) {
+            result.append("Error: Invalid Get syntax. Line: ").append(line).append("\n");
+            return;
+        }
+
+        String variable1 = parts[1];
+        String variable2 = parts[3].replace("#", "").trim();
+
+        if (!variableTypes.containsKey(variable1)) {
+            result.append("Error: Variable '").append(variable1).append("' is not declared. Line: ").append(line).append("\n");
+        }
+        if (!variableTypes.containsKey(variable2)) {
+            result.append("Error: Variable '").append(variable2).append("' is not declared. Line: ").append(line).append("\n");
+        }
+
+        if (variableTypes.containsKey(variable1) && variableTypes.containsKey(variable2)) {
+            result.append("Get instruction detected: ").append(variable1).append(" from ").append(variable2).append("\n");
+        }
+    }
+
+    private void handlePrint(String line, StringBuilder result) {
+        String content = line.substring(line.indexOf(' ') + 1).replace("#", "").trim();
+        if (stringPattern.matcher(content).matches() || variableTypes.containsKey(content)) {
+            result.append("Print instruction detected: ").append(content).append("\n");
+        } else {
+            result.append("Error: Invalid print content '").append(content).append("'. Line: ").append(line).append("\n");
+        }
     }
 }
-
