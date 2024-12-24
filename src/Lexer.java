@@ -8,7 +8,7 @@ public class Lexer {
 	private static final HashSet<String> OPERATORS = new HashSet<>();
 
 	static {
-		// Add SNAKE language keywords
+
 		KEYWORDS.add("Snk_Begin");
 		KEYWORDS.add("Snk_End");
 		KEYWORDS.add("Begin");
@@ -20,13 +20,11 @@ public class Lexer {
 		KEYWORDS.add("End");
 		KEYWORDS.add("Snk_Print");
 
-		// Add symbols
 		SYMBOLS.add(",");
 		SYMBOLS.add("#");
 		SYMBOLS.add("[");
 		SYMBOLS.add("]");
 
-		// Add operators
 		OPERATORS.add("<");
 		OPERATORS.add(">");
 		OPERATORS.add("=");
@@ -34,30 +32,30 @@ public class Lexer {
 	}
 
 	private String getTokenExplanation(String token) {
-		// Return the explanation for each token
+
 		switch (token) {
 		case "Snk_Begin":
-			return "mot clé de début de programme";
+			return "mot cle de debut de programme";
 		case "Snk_End":
-			return "mot clé de fin de programme";
+			return "mot cle de fin de programme";
 		case "Snk_Real":
-			return "mot clé de déclaration du type réel";
+			return "mot cle de déclaration du type réel";
 		case "Snk_Int":
-			return "mot clé de déclaration du type entier";
+			return "mot cle de déclaration du type entier";
 		case "Set":
-			return "mot clé pour affectation d’une valeur";
+			return "mot cle pour affectation d’une valeur";
 		case "If":
-			return "mot clé pour conditionnel";
+			return "mot cle pour conditionnel";
 		case "Snk_Print":
-			return "mot clé d'affichage";
+			return "mot cle d'affichage";
 		case "Begin":
-			return "début de bloc";
+			return "debut de bloc";
 		case "Else":
-			return "mot clé pour sinon";
+			return "mot cle pour sinon";
 		case "End":
-			return "mot clé";
+			return "mot cle";
 		case ",":
-			return "séparateur";
+			return "separateur";
 		case "#":
 			return "fin d’instruction";
 		case "[":
@@ -67,14 +65,14 @@ public class Lexer {
 		case ">":
 		case "=":
 		case "!=":
-			return "opérateur de comparaison";
+			return "operateur de comparaison";
 		default:
 			if (token.matches("\\d+")) {
 				return "nombre entier";
 			} else if (token.matches("\\d+\\.\\d+")) {
-				return "nombre réel";
+				return "nombre reel";
 			} else if (token.matches("\"[^\"]*\"")) {
-				return "chaîne de caractères";
+				return "chaîne de caracteres";
 			} else if (token.matches("[a-zA-Z][a-zA-Z0-9_]*")) {
 				return "identificateur";
 			}
@@ -92,11 +90,11 @@ public class Lexer {
 
 		while (matcher.find()) {
 			String token = matcher.group();
-			// First check if the token is a keyword
+
 			if (KEYWORDS.contains(token)) {
 				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
 			}
-			// Then check if the token is a symbol, operator, or identifier
+
 			else if (SYMBOLS.contains(token)) {
 				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
 			} else if (OPERATORS.contains(token)) {
@@ -116,7 +114,6 @@ public class Lexer {
 				+ "# fin d’instruction\n" + "Else\n" + "Begin\n" + "Set x1 15.5\n" + "# fin d’instruction\n" + "End\n"
 				+ "Snk_Print \"Hello, World!\"\n" + "# fin d’instruction\n" + "Snk_End";
 
-		// Tokenize and display the results
 		String result = lexer.tokenize(testCode);
 		System.out.println(result);
 	}
