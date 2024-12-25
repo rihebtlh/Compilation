@@ -1,17 +1,15 @@
 package snake;
-import java.util.*;
-import java.util.regex.*;
 
 public class SemanticAnalyzer {
-    private final Map<String, String> variableTypes = new HashMap<>(); // Stockage des types des variables déclarées
-    private final Pattern intPattern = Pattern.compile("\\d+"); // Pattern pour les entiers
-    private final Pattern realPattern = Pattern.compile("\\d+\\.\\d+"); // Pattern pour les réels
-    private final Pattern stringPattern = Pattern.compile("\"[^\"]*\""); // Pattern pour les chaînes
-    private final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*"); // Identificateur valide
+    private final java.util.Map<String, String> variableTypes = new java.util.HashMap<>(); // Store declared variable types
+    private final java.util.regex.Pattern intPattern = java.util.regex.Pattern.compile("\\d+"); // Pattern for integers
+    private final java.util.regex.Pattern realPattern = java.util.regex.Pattern.compile("\\d+\\.\\d+"); // Pattern for reals
+    private final java.util.regex.Pattern stringPattern = java.util.regex.Pattern.compile("\"[^\"]*\""); // Pattern for strings
+    private final java.util.regex.Pattern identifierPattern = java.util.regex.Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*"); // Valid identifier
 
     public String analyze(String code) {
         StringBuilder result = new StringBuilder("Semantic Analysis Result:\n");
-        String[] lines = code.split("\n");
+        String[] lines = code.split("\\n");
 
         for (String line : lines) {
             line = line.trim();
@@ -107,11 +105,14 @@ public class SemanticAnalyzer {
     }
 
     private void handlePrint(String line, StringBuilder result) {
-        String content = line.substring(line.indexOf(' ') + 1).replace("#", "").trim();
-        if (stringPattern.matcher(content).matches() || variableTypes.containsKey(content)) {
-            result.append("Print instruction detected: ").append(content).append("\n");
-        } else {
-            result.append("Error: Invalid print content '").append(content).append("'. Line: ").append(line).append("\n");
+        String[] parts = line.substring(line.indexOf(' ') + 1).replace("#", "").trim().split(",");
+        for (String content : parts) {
+            content = content.trim();
+            if (stringPattern.matcher(content).matches() || variableTypes.containsKey(content)) {
+                result.append("Print instruction detected: ").append(content).append("\n");
+            } else {
+                result.append("Error: Invalid print content '").append(content).append("'. Line: ").append(line).append("\n");
+            }
         }
     }
 }
