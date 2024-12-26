@@ -17,7 +17,7 @@ public class SemanticAnalyzer {
             // Ignorer les lignes vides
             if (trimmedLine.isEmpty()) continue;
 
-            // Ignorer les lignes Snk_Begin, Snk_End, If, Else, et les commentaires
+            // Ignorer les lignes spécifiques
             if (trimmedLine.startsWith("Snk_Begin") || trimmedLine.startsWith("Snk_End") 
                 || trimmedLine.startsWith("If") || trimmedLine.startsWith("Else")
                 || trimmedLine.startsWith("Begin") || trimmedLine.startsWith("End")
@@ -88,7 +88,7 @@ public class SemanticAnalyzer {
         }
 
         String variable = parts[1];
-        String value = parts[2].replace("#", "").trim();
+        String expression = parts[2].replace("#", "").trim();  // Expression arithmétique
 
         if (!declaredVariables.containsKey(variable)) {
             result.append("Erreur : La variable '").append(variable).append("' n'est pas déclarée.\n");
@@ -96,14 +96,34 @@ public class SemanticAnalyzer {
         }
 
         String expectedType = declaredVariables.get(variable);
-        if (!isValueCompatible(expectedType, value)) {
-            result.append("Erreur : Incompatibilité de type pour la variable '").append(variable)
-                  .append("'. Attendu : ").append(expectedType).append(". Reçu : ").append(value).append(" (type : ").append(getValueType(value)).append(")\n");
+
+        // Vérification si l'expression est arithmétique
+        if (isArithmeticExpression(expression)) {
+            try {
+                // Évaluer l'expression arithmétique
+                double resultValue = evaluateExpression(expression);
+
+                // Convertir selon le type attendu
+                Object finalValue = (expectedType.equals("int")) ? (int) resultValue : resultValue;
+
+                // Mettre à jour la valeur de la variable
+                variableValues.put(variable, finalValue);
+                result.append("Affectation correcte : ").append(variable).append(" = ").append(finalValue)
+                      .append(" (type : ").append(expectedType).append(")\n");
+            } catch (Exception e) {
+                result.append("Erreur : Expression arithmétique invalide dans l'affectation : ").append(line).append("\n");
+            }
         } else {
-            Object parsedValue = parseValue(value, expectedType);
-            variableValues.put(variable, parsedValue);
-            result.append("Affectation correcte : ").append(variable).append(" = ").append(parsedValue)
-                  .append(" (type : ").append(expectedType).append(")\n");
+            // Si ce n'est pas une expression arithmétique, vérifier la compatibilité des types
+            if (!isValueCompatible(expectedType, expression)) {
+                result.append("Erreur : Incompatibilité de type pour la variable '").append(variable)
+                      .append("'. Attendu : ").append(expectedType).append(". Reçu : ").append(expression).append(" (type : ").append(getValueType(expression)).append(")\n");
+            } else {
+                Object parsedValue = parseValue(expression, expectedType);
+                variableValues.put(variable, parsedValue);
+                result.append("Affectation correcte : ").append(variable).append(" = ").append(parsedValue)
+                      .append(" (type : ").append(expectedType).append(")\n");
+            }
         }
     }
 
@@ -120,13 +140,7 @@ public class SemanticAnalyzer {
         if (!declaredVariables.containsKey(var1) || !declaredVariables.containsKey(var2)) {
             result.append("Erreur : Variables utilisées non déclarées dans Get. Ligne : ").append(line).append("\n");
         } else {
-            String type1 = declaredVariables.get(var1);
-            String type2 = declaredVariables.get(var2);
-            if (!type1.equals(type2)) {
-                result.append("Erreur : Les variables '").append(var1).append("' et '").append(var2).append("' ne sont pas du même type.\n");
-            } else {
-                result.append("Instruction Get sémantiquement correcte : ").append(line).append("\n");
-            }
+            result.append("Instruction Get sémantiquement correcte : ").append(line).append("\n");
         }
     }
 
@@ -155,77 +169,23 @@ public class SemanticAnalyzer {
     }
 
     private void processArithmetic(String line, StringBuilder result) {
-        String[] variablesInExpression = line.replaceAll("[^a-zA-Z_]", " ").split("\\s+");
-        for (String variable : variablesInExpression) {
-            if (!variable.isEmpty() && !declaredVariables.containsKey(variable)) {
-                result.append("Erreur : La variable '").append(variable).append("' n'est pas déclarée dans l'expression arithmétique.\n");
-                return;
-            }
-        }
-
         try {
-            double value = evaluateExpression(line);
-            result.append("Résultat de l'expression : ").append(line).append(" = ").append(value).append(" (type : int)\n");
+            String expression = line.replace("#", "").trim();
+            double resultValue = evaluateExpression(expression);
+            result.append("Résultat de l'expression : ").append(expression).append(" = ").append(resultValue).append(" (type : real)\n");
         } catch (Exception e) {
             result.append("Erreur : Expression arithmétique invalide : ").append(line).append("\n");
         }
     }
-
-    private boolean isValueCompatible(String expectedType, String value) {
-        try {
-            switch (expectedType) {
-                case "int":
-                    Integer.parseInt(value);
-                    break;
-                case "real":
-                    Double.parseDouble(value);
-                    break;
-                case "strg":
-                    if (!(value.startsWith("\"") && value.endsWith("\""))) return false;
-                    break;
-                default:
-                    return false;
-            }
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return true;
+    
+    
+    private boolean isArithmeticExpression(String expression) {
+        // Modifié pour accepter les opérations arithmétiques simples
+        return expression.matches(".*[\\d\\+\\-\\*/\\^()]+.*#");
     }
-
-    private String getValueType(String value) {
-        try {
-            Integer.parseInt(value);
-            return "int";
-        } catch (NumberFormatException e1) {
-            try {
-                Double.parseDouble(value);
-                return "real";
-            } catch (NumberFormatException e2) {
-                if (value.startsWith("\"") && value.endsWith("\"")) return "strg";
-                return "unknown";
-            }
-        }
-    }
-
-    private Object parseValue(String value, String type) {
-        switch (type) {
-            case "int":
-                return Integer.parseInt(value);
-            case "real":
-                return Double.parseDouble(value);
-            case "strg":
-                return value.substring(1, value.length() - 1);
-            default:
-                return null;
-        }
-    }
-
-    private boolean isArithmeticExpression(String line) {
-        return line.matches(".*[\\d\\+\\-\\*/\\^\\(\\)].*");
-    }
+   
 
     private double evaluateExpression(String expression) {
-        // Placeholder for expression evaluation logic
         return new Object() {
             int pos = -1, ch;
 
@@ -287,5 +247,53 @@ public class SemanticAnalyzer {
                 return x;
             }
         }.parse();
+    }
+    private boolean isValueCompatible(String expectedType, String value) {
+        try {
+            switch (expectedType) {
+                case "int":
+                    Integer.parseInt(value);
+                    break;
+                case "real":
+                    Double.parseDouble(value);
+                    break;
+                case "strg":
+                    if (!(value.startsWith("\"") && value.endsWith("\""))) return false;
+                    break;
+                default:
+                    return false;
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private String getValueType(String value) {
+        try {
+            Integer.parseInt(value);
+            return "int";
+        } catch (NumberFormatException e1) {
+            try {
+                Double.parseDouble(value);
+                return "real";
+            } catch (NumberFormatException e2) {
+                if (value.startsWith("\"") && value.endsWith("\"")) return "strg";
+                return "unknown";
+            }
+        }
+    }
+
+    private Object parseValue(String value, String type) {
+        switch (type) {
+            case "int":
+                return Integer.parseInt(value);
+            case "real":
+                return Double.parseDouble(value);
+            case "strg":
+                return value.substring(1, value.length() - 1);
+            default:
+                return null;
+        }
     }
 }
