@@ -10,8 +10,8 @@ public class Parser {
 		for (String line : lines) {
 			String trimmedLine = line.trim();
 
-			if (trimmedLine.equals("# fin d’instruction")) {
-				result.append("Fin d’instruction detectee\n");
+			if (trimmedLine.equals("# fin d'instruction")) {
+				result.append("Fin d'instruction detectee\n");
 				continue;
 			}
 
@@ -21,7 +21,7 @@ public class Parser {
 					hasErrors = true;
 				} else {
 					programStarted = true;
-					result.append("Debut du programme detecte\n");
+					result.append("Debut du programme)\n");
 				}
 			} else if (trimmedLine.equals("Snk_End")) {
 				if (!programStarted) {
@@ -35,58 +35,40 @@ public class Parser {
 					programEnded = true;
 					result.append("Fin du programme detectee\n");
 				}
-			} else if (trimmedLine.endsWith("#")) {
-				result.append("Fin d’instruction detectee : ").append(trimmedLine).append("\n");
+			} 
+			else if (trimmedLine.startsWith("##")) {
+	            result.append("Commentaire detecte : ").append(trimmedLine).append("\n");
+	            continue;
+	        }
+			else if (trimmedLine.startsWith("Snk_Int")) {
+				result.append("Declaration de variables entieres) : ").append(trimmedLine).append("\n");
 			}
-
-			else if (trimmedLine.startsWith("Snk_Int") || trimmedLine.startsWith("Snk_Real")) {
-				String[] parts = trimmedLine.split("\\s+");
-				if (parts.length < 3) {
-					result.append("Erreur: La declaration doit contenir un type suivi d'un identificateur.\n");
-					hasErrors = true;
-				} else {
-
-					boolean validDeclaration = true;
-					String[] identifiers = parts[1].split(",");
-					for (String identifier : identifiers) {
-						String trimmedIdentifier = identifier.trim();
-						if (!trimmedIdentifier.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-							validDeclaration = false;
-							result.append(
-									"Erreur: La declaration doit contenir des identificateurs valides. Identifiant : ")
-									.append(trimmedIdentifier).append("\n");
-							hasErrors = true;
-							break;
-						}
-					}
-					if (validDeclaration) {
-						result.append("Declaration de type detectee : ").append(trimmedLine).append("\n");
-					}
-				}
+			else if (trimmedLine.startsWith("Snk_Real")) {
+				result.append("Declaration de variables reelles : ").append(trimmedLine).append("\n");
 			}
-
 			else if (trimmedLine.startsWith("Set")) {
-				String[] parts = trimmedLine.split("\\s+");
-				if (parts.length != 3 || !parts[1].matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-					result.append("Erreur de syntaxe dans l'affectation : ").append(trimmedLine).append("\n");
-					hasErrors = true;
-				} else {
-					result.append("Affectation detecte : ").append(trimmedLine).append("\n");
-				}
+				result.append("Affectation d’une valeur : ").append(trimmedLine).append("\n");
 			}
-			else if (trimmedLine.startsWith("If") || trimmedLine.startsWith("Else")
-					|| trimmedLine.startsWith("Begin")) {
-				result.append("Mot cle detecte : ").append(trimmedLine).append("\n");
+			else if (trimmedLine.startsWith("Get")) {
+				result.append("Affectation de valeur entre 2 variables : ").append(trimmedLine).append("\n");
 			}
-			else if (trimmedLine.matches("If \\[.*\\]") || trimmedLine.matches("Else")
-					|| trimmedLine.matches("Begin")) {
-				result.append("Expression conditionnelle ou début de bloc detecte : ").append(trimmedLine).append("\n");
+			else if (trimmedLine.matches("Snk_Print \".*\" #")) {
+				result.append("Affichage d'un message) : ").append(trimmedLine).append("\n");
 			}
-			else if (trimmedLine.startsWith("Snk_Print")) {
-				result.append("Fonction d'affichage detecte : ").append(trimmedLine).append("\n");
+			else if (trimmedLine.matches("Snk_Print [a-zA-Z_][a-zA-Z0-9_, ]* #")) {
+				result.append("Affichage de la valeur de variables) : ").append(trimmedLine).append("\n");
+			}
+			else if (trimmedLine.matches("If \\[.*\\]")) {
+				result.append("Condition If : ").append(trimmedLine).append("\n");
+			}
+			else if (trimmedLine.equals("Else")) {
+				result.append("Instruction conditionnelle Else)\n");
+			}
+			else if (trimmedLine.equals("Begin")) {
+				result.append("Debut de bloc : Begin\n");
 			}
 			else if (trimmedLine.equals("End")) {
-				result.append("Mot cle detecte : End\n");
+				result.append("Fin de bloc: End\n");
 			} else {
 				result.append("Ligne inconnue ou syntaxe incorrecte : ").append(trimmedLine).append("\n");
 				hasErrors = true;
@@ -110,10 +92,10 @@ public class Parser {
 	public static void main(String[] args) {
 		Parser parser = new Parser();
 
-		String testCode = "Snk_Begin\n" + "Snk_Int i, j\n" + "# fin d’instruction\n" + "Snk_Real x1\n"
-				+ "# fin d’instruction\n" + "Set i 10\n" + "# fin d’instruction\n" + "If [ i < 20 ]\n" + "Set j 5\n"
-				+ "# fin d’instruction\n" + "Else\n" + "Begin\n" + "Set x1 15.5\n" + "# fin d’instruction\n" + "End\n"
-				+ "Snk_Print \"Hello World!\"\n" + "# fin d’instruction\n" + "Snk_End";
+		String testCode = "Snk_Begin\n" + "Snk_Int i, j #\n" + "Snk_Real x1 #\n"
+				+ "Set i 10 #\n" + "If [ i < 20 ]\n" + "Set j 5 #\n"
+				+ "Else\n" + "Begin\n" + "Set x1 15.5 #\n" + "End\n"
+				+ "Snk_Print \"Hello, World!\" #\n" + "## hi\n" + "Snk_End\n";
 		String result = parser.parse(testCode);
 		System.out.println(result);
 	}

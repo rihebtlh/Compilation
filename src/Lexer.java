@@ -58,6 +58,8 @@ public class Lexer {
 			return "separateur";
 		case "#":
 			return "fin d’instruction";
+		case "##":
+			return "Commantaire";
 		case "[":
 		case "]":
 			return "début/fin de condition";
