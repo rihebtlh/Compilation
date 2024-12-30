@@ -1,3 +1,5 @@
+package snake;
+
 public class Parser {
 	public String parse(String code) {
 		StringBuilder result = new StringBuilder("Resultat de l'analyse syntaxique :\n");
@@ -21,7 +23,7 @@ public class Parser {
 					hasErrors = true;
 				} else {
 					programStarted = true;
-					result.append("Debut du programme)\n");
+					result.append("Debut du programme\n");
 				}
 			} else if (trimmedLine.equals("Snk_End")) {
 				if (!programStarted) {
@@ -33,7 +35,7 @@ public class Parser {
 					hasErrors = true;
 				} else {
 					programEnded = true;
-					result.append("Fin du programme detectee\n");
+					result.append("Fin du programme\n");
 				}
 			} 
 			else if (trimmedLine.startsWith("##")) {
@@ -41,7 +43,7 @@ public class Parser {
 	            continue;
 	        }
 			else if (trimmedLine.startsWith("Snk_Int")) {
-				result.append("Declaration de variables entieres) : ").append(trimmedLine).append("\n");
+				result.append("Declaration de variables entieres : ").append(trimmedLine).append("\n");
 			}
 			else if (trimmedLine.startsWith("Snk_Real")) {
 				result.append("Declaration de variables reelles : ").append(trimmedLine).append("\n");
@@ -69,7 +71,10 @@ public class Parser {
 			}
 			else if (trimmedLine.equals("End")) {
 				result.append("Fin de bloc: End\n");
-			} else {
+			}
+			 else if (isArithmeticExpression(trimmedLine)) { // Ignore les expressions arithmétiques
+	                continue; // Ne fait rien pour ces lignes
+	        } else {
 				result.append("Ligne inconnue ou syntaxe incorrecte : ").append(trimmedLine).append("\n");
 				hasErrors = true;
 			}
@@ -88,6 +93,11 @@ public class Parser {
 
 		return result.toString();
 	}
+	
+	 private boolean isArithmeticExpression(String line) {
+	        // Vérifie si c'est une expression arithmétique ou une affectation avec un #
+	        return line.matches(".*[\\d\\+\\-\\*/\\^\\(\\)=].*#");
+	    }
 
 	public static void main(String[] args) {
 		Parser parser = new Parser();
