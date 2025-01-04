@@ -1,4 +1,4 @@
-package snake;
+
 
 public class Parser {
 	public String parse(String code) {
