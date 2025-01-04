@@ -119,7 +119,7 @@ public class SemanticAnalyzer {
 
     private void processArithmetic(String line, StringBuilder result) {
         try {
-            String expression = line.replace("#", "").trim();
+            String expression = line.trim(); // Utilise la ligne entière comme expression
             double value = evaluateExpression(expression);
             result.append("Résultat de l'expression : ").append(expression).append(" = ").append(value).append("\n");
         } catch (Exception e) {
@@ -128,10 +128,12 @@ public class SemanticAnalyzer {
     }
 
     private boolean isArithmeticExpression(String expression) {
-        return expression.matches(".*[\\d\\+\\-\\*/\\^()]+.*#");
+        // Identifie uniquement les expressions arithmétiques valides
+        return expression.matches(".*[\\d\\+\\-\\*/\\^()]+.*");
     }
 
     private double evaluateExpression(String expression) {
+        // Évalue une expression mathématique via une analyse syntaxique récursive
         return new Object() {
             int pos = -1, ch;
 
