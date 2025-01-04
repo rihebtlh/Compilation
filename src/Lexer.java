@@ -39,9 +39,9 @@ public class Lexer {
 		case "Snk_End":
 			return "mot cle de fin de programme";
 		case "Snk_Real":
-			return "mot cle de déclaration du type réel";
+			return "mot cle de declaration du type reel";
 		case "Snk_Int":
-			return "mot cle de déclaration du type entier";
+			return "mot cle de declaration du type entier";
 		case "Set":
 			return "mot cle pour affectation d’une valeur";
 		case "If":
@@ -62,7 +62,7 @@ public class Lexer {
 			return "Commantaire";
 		case "[":
 		case "]":
-			return "début/fin de condition";
+			return "debut/fin de condition";
 		case "<":
 		case ">":
 		case "=":
@@ -84,10 +84,10 @@ public class Lexer {
 
 	public String tokenize(String input) {
 		StringBuilder result = new StringBuilder();
+		
+		String expreg = "\"[^\"]*\"|\\d+\\.\\d+|\\d+|[a-zA-Z][a-zA-Z0-9_]*|[<>!=#\\[\\],]";//expression reguliere
 
-		String regex = "\"[^\"]*\"|\\d+\\.\\d+|\\d+|[a-zA-Z][a-zA-Z0-9_]*|[<>!=#\\[\\],]";
-
-		Pattern pattern = Pattern.compile(regex);
+		Pattern pattern = Pattern.compile(expreg);
 		Matcher matcher = pattern.matcher(input);
 
 		while (matcher.find()) {
@@ -107,16 +107,10 @@ public class Lexer {
 		}
 		return result.toString();
 	}
-
-	public static void main(String[] args) {
-		Lexer lexer = new Lexer();
-
-		String testCode = "Snk_Begin\n" + "Snk_Int i, j\n" + "# fin d’instruction\n" + "Snk_Real x1\n"
-				+ "# fin d’instruction\n" + "Set i 10\n" + "# fin d’instruction\n" + "If [ i < 20 ]\n" + "Set j 5\n"
-				+ "# fin d’instruction\n" + "Else\n" + "Begin\n" + "Set x1 15.5\n" + "# fin d’instruction\n" + "End\n"
-				+ "Snk_Print \"Hello, World!\"\n" + "# fin d’instruction\n" + "Snk_End";
-
-		String result = lexer.tokenize(testCode);
-		System.out.println(result);
-	}
 }
+//Pattern.compile(String regex)
+//Compile une expression régulière sous forme de Pattern.
+//matcher(String input)
+//matcher.find() : À chaque fois qu'un token est trouvé :
+//Il est comparé avec les ensembles (KEYWORDS, SYMBOLS, OPERATORS).
+//L'explication est ajoutée à result via getTokenExplanation().
