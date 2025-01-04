@@ -1,4 +1,4 @@
-package snake;
+
 
 import java.util.HashMap;
 import java.util.Map;
