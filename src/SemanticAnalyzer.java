@@ -1,5 +1,3 @@
-package snake;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +6,7 @@ public class SemanticAnalyzer {
     private Map<String, Object> variableValues = new HashMap<>();
 
     public String analyze(String code) {
-        StringBuilder result = new StringBuilder("Résultat de l'analyse sémantique :\n");
+        StringBuilder result = new StringBuilder("Resultat de l'analyse semantique :\n");
         String[] lines = code.split("\n");
 
         for (String line : lines) {
@@ -34,14 +32,14 @@ public class SemanticAnalyzer {
         return result.toString();
     }
 
-    private boolean isIgnoredLine(String line) {
+    private boolean isIgnoredLine(String line) { // Méthode qui détermine si une ligne peut être ignorée
         return line.startsWith("Snk_Begin") || line.startsWith("Snk_End") ||
                line.startsWith("If") || line.startsWith("Else") ||
                line.startsWith("Begin") || line.startsWith("End") ||
                line.startsWith("##");
     }
 
-    private void processDeclaration(String line, StringBuilder result) {
+    private void processDeclaration(String line, StringBuilder result) {//declaration
         String type = line.split(" ")[0].replace("Snk_", "").toLowerCase();
         String[] variables = line.substring(line.indexOf(' ') + 1).replace("#", "").split(",");
 
@@ -58,7 +56,7 @@ public class SemanticAnalyzer {
         }
     }
 
-    private void processAssignment(String line, StringBuilder result) {
+    private void processAssignment(String line, StringBuilder result) {//affectation
         String[] parts = line.split("\s+", 3);
         if (parts.length < 3 || !line.endsWith("#")) {
             result.append("Erreur : Affectation incorrecte. Ligne : ").append(line).append("\n");
@@ -69,7 +67,7 @@ public class SemanticAnalyzer {
         String expression = parts[2].replace("#", "").trim();
 
         if (!declaredVariables.containsKey(variable)) {
-            result.append("Erreur : La variable '").append(variable).append("' n'est pas déclarée.\n");
+            result.append("Erreur : La variable '").append(variable).append("' n'est pas declaree.\n");
             return;
         }
 
@@ -78,11 +76,11 @@ public class SemanticAnalyzer {
             variableValues.put(variable, resultValue);
             result.append("Affectation correcte : ").append(variable).append(" = ").append(resultValue).append("\n");
         } catch (Exception e) {
-            result.append("Erreur : Expression arithmétique invalide dans l'affectation : ").append(line).append("\n");
+            result.append("Erreur : Expression arithmetique invalide dans l'affectation : ").append(line).append("\n");
         }
     }
 
-    private void processGet(String line, StringBuilder result) {
+    private void processGet(String line, StringBuilder result) {//Get
         String[] parts = line.split("\s+");
         if (parts.length < 4 || !"from".equals(parts[2]) || !line.endsWith("#")) {
             result.append("Erreur : Instruction Get incorrecte. Ligne : ").append(line).append("\n");
@@ -93,13 +91,13 @@ public class SemanticAnalyzer {
         String var2 = parts[3].replace("#", "");
 
         if (!declaredVariables.containsKey(var1) || !declaredVariables.containsKey(var2)) {
-            result.append("Erreur : Variables utilisées non déclarées dans Get. Ligne : ").append(line).append("\n");
+            result.append("Erreur : Variables utilisees non declarees dans Get. Ligne : ").append(line).append("\n");
         } else {
             result.append("Instruction Get correcte : ").append(line).append("\n");
         }
     }
 
-    private void processPrint(String line, StringBuilder result) {
+    private void processPrint(String line, StringBuilder result) {//l'affichage des variables ou des chaînes de caractères
         String content = line.substring(line.indexOf(" ") + 1).replace("#", "").trim();
 
         if (content.startsWith("\"") && content.endsWith("\"")) {
@@ -108,20 +106,20 @@ public class SemanticAnalyzer {
             for (String variable : content.split(",")) {
                 variable = variable.trim();
                 if (declaredVariables.containsKey(variable)) {
-                    result.append(variable).append(" = ").append(variableValues.getOrDefault(variable, "non initialisé")).append(" ");
+                    result.append(variable).append(" = ").append(variableValues.getOrDefault(variable, "non initialise")).append(" ");
                 } else {
-                    result.append("Erreur : La variable '").append(variable).append("' n'est pas déclarée.\n");
+                    result.append("Erreur : La variable '").append(variable).append("' n'est pas declaree.\n");
                 }
             }
             result.append("\n");
         }
     }
 
-    private void processArithmetic(String line, StringBuilder result) {
+    private void processArithmetic(String line, StringBuilder result) {//les expressions arithmétiques
         try {
             String expression = line.trim(); // Utilise la ligne entière comme expression
             double value = evaluateExpression(expression);
-            result.append("Résultat de l'expression : ").append(expression).append(" = ").append(value).append("\n");
+            result.append("Resultat de l'expression : ").append(expression).append(" = ").append(value).append("\n");
         } catch (Exception e) {
             result.append("Erreur : Expression arithmétique invalide : ").append(line).append("\n");
         }
@@ -197,3 +195,4 @@ public class SemanticAnalyzer {
         }.parse();
     }
 }
+//Map pour stocker les variables déclarées et leurs types/ des variables affectées
