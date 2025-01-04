@@ -1,5 +1,3 @@
-package snake;
-
 public class Parser {
 	public String parse(String code) {
 		StringBuilder result = new StringBuilder("Resultat de l'analyse syntaxique :\n");
@@ -55,16 +53,16 @@ public class Parser {
 				result.append("Affectation de valeur entre 2 variables : ").append(trimmedLine).append("\n");
 			}
 			else if (trimmedLine.matches("Snk_Print \".*\" #")) {
-				result.append("Affichage d'un message) : ").append(trimmedLine).append("\n");
+				result.append("Affichage d'un message : ").append(trimmedLine).append("\n");
 			}
 			else if (trimmedLine.matches("Snk_Print [a-zA-Z_][a-zA-Z0-9_, ]* #")) {
-				result.append("Affichage de la valeur de variables) : ").append(trimmedLine).append("\n");
+				result.append("Affichage de la valeur de variables : ").append(trimmedLine).append("\n");
 			}
 			else if (trimmedLine.matches("If \\[.*\\]")) {
 				result.append("Condition If : ").append(trimmedLine).append("\n");
 			}
 			else if (trimmedLine.equals("Else")) {
-				result.append("Instruction conditionnelle Else)\n");
+				result.append("Instruction conditionnelle Else\n");
 			}
 			else if (trimmedLine.equals("Begin")) {
 				result.append("Debut de bloc : Begin\n");
@@ -98,15 +96,4 @@ public class Parser {
 	        // Vérifie si c'est une expression arithmétique ou une affectation avec un #
 	        return line.matches(".*[\\d\\+\\-\\*/\\^\\(\\)=].*#");
 	    }
-
-	public static void main(String[] args) {
-		Parser parser = new Parser();
-
-		String testCode = "Snk_Begin\n" + "Snk_Int i, j #\n" + "Snk_Real x1 #\n"
-				+ "Set i 10 #\n" + "If [ i < 20 ]\n" + "Set j 5 #\n"
-				+ "Else\n" + "Begin\n" + "Set x1 15.5 #\n" + "End\n"
-				+ "Snk_Print \"Hello, World!\" #\n" + "## hi\n" + "Snk_End\n";
-		String result = parser.parse(testCode);
-		System.out.println(result);
-	}
 }
