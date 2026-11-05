@@ -1,116 +1,103 @@
-import java.util.regex.*;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lexer {
 
-	private static final HashSet<String> KEYWORDS = new HashSet<>();
-	private static final HashSet<String> SYMBOLS = new HashSet<>();
-	private static final HashSet<String> OPERATORS = new HashSet<>();
+	// Source unique de vérité : token connu -> explication
+	private static final Map<String, String> TOKENS = new HashMap<>();
 
 	static {
+		// Mots-clés
+		TOKENS.put("Snk_Begin", "mot cle de debut de programme");
+		TOKENS.put("Snk_End", "mot cle de fin de programme");
+		TOKENS.put("Snk_Int", "mot cle de declaration du type entier");
+		TOKENS.put("Snk_Real", "mot cle de declaration du type reel");
+		TOKENS.put("Snk_Strg", "mot cle de declaration du type chaine");
+		TOKENS.put("Snk_Print", "mot cle d'affichage");
+		TOKENS.put("Set", "mot cle pour affectation d'une valeur");
+		TOKENS.put("Get", "mot cle pour recuperer une valeur");
+		TOKENS.put("from", "mot cle d'origine (utilise avec Get)");
+		TOKENS.put("If", "mot cle pour conditionnel");
+		TOKENS.put("Else", "mot cle pour sinon");
+		TOKENS.put("Begin", "debut de bloc");
+		TOKENS.put("End", "fin de bloc");
 
-		KEYWORDS.add("Snk_Begin");
-		KEYWORDS.add("Snk_End");
-		KEYWORDS.add("Begin");
-		KEYWORDS.add("Snk_Int");
-		KEYWORDS.add("Snk_Real");
-		KEYWORDS.add("Set");
-		KEYWORDS.add("If");
-		KEYWORDS.add("Else");
-		KEYWORDS.add("End");
-		KEYWORDS.add("Snk_Print");
+		// Symboles
+		TOKENS.put(",", "separateur");
+		TOKENS.put("#", "fin d'instruction");
+		TOKENS.put("##", "commentaire");
+		TOKENS.put("[", "debut de condition");
+		TOKENS.put("]", "fin de condition");
+		TOKENS.put("(", "parenthese ouvrante");
+		TOKENS.put(")", "parenthese fermante");
 
-		SYMBOLS.add(",");
-		SYMBOLS.add("#");
-		SYMBOLS.add("[");
-		SYMBOLS.add("]");
+		// Opérateurs de comparaison
+		TOKENS.put("<", "operateur de comparaison");
+		TOKENS.put(">", "operateur de comparaison");
+		TOKENS.put("=", "operateur de comparaison");
+		TOKENS.put("!=", "operateur de comparaison");
 
-		OPERATORS.add("<");
-		OPERATORS.add(">");
-		OPERATORS.add("=");
-		OPERATORS.add("!=");
+		// Opérateurs arithmétiques
+		TOKENS.put("+", "operateur arithmetique");
+		TOKENS.put("-", "operateur arithmetique");
+		TOKENS.put("*", "operateur arithmetique");
+		TOKENS.put("/", "operateur arithmetique");
+		TOKENS.put("^", "operateur arithmetique (puissance)");
 	}
 
-	private String getTokenExplanation(String token) {
+	// L'ordre des alternatives est important : les plus specifiques d'abord
+	private static final Pattern PATTERN = Pattern.compile(
+			"##[^\\r\\n]*"                          // commentaire (jusqu'a la fin de ligne)
+			+ "|\"[^\"\\r\\n]*\""                   // chaine de caracteres
+			+ "|\"[^\"\\r\\n]*"                     // chaine non terminee
+			+ "|\\d+[a-zA-Z_][a-zA-Z0-9_]*"         // identifiant invalide (ex: 2x)
+			+ "|\\d+\\.\\d+"                        // nombre reel
+			+ "|\\d+"                               // nombre entier
+			+ "|[a-zA-Z_][a-zA-Z0-9_]*"             // identificateur / mot cle
+			+ "|!=|[<>=#\\[\\],+\\-*/^()]"          // operateurs et symboles
+			+ "|\\S");                              // tout autre caractere => erreur lexicale
 
-		switch (token) {
-		case "Snk_Begin":
-			return "mot cle de debut de programme";
-		case "Snk_End":
-			return "mot cle de fin de programme";
-		case "Snk_Real":
-			return "mot cle de declaration du type reel";
-		case "Snk_Int":
-			return "mot cle de declaration du type entier";
-		case "Set":
-			return "mot cle pour affectation d’une valeur";
-		case "If":
-			return "mot cle pour conditionnel";
-		case "Snk_Print":
-			return "mot cle d'affichage";
-		case "Begin":
-			return "debut de bloc";
-		case "Else":
-			return "mot cle pour sinon";
-		case "End":
-			return "mot cle";
-		case ",":
-			return "separateur";
-		case "#":
-			return "fin d’instruction";
-		case "##":
-			return "Commantaire";
-		case "[":
-		case "]":
-			return "debut/fin de condition";
-		case "<":
-		case ">":
-		case "=":
-		case "!=":
-			return "operateur de comparaison";
-		default:
-			if (token.matches("\\d+")) {
-				return "nombre entier";
-			} else if (token.matches("\\d+\\.\\d+")) {
-				return "nombre reel";
-			} else if (token.matches("\"[^\"]*\"")) {
-				return "chaîne de caracteres";
-			} else if (token.matches("[a-zA-Z][a-zA-Z0-9_]*")) {
-				return "identificateur";
-			}
-			return "inconnu";
+	private String getTokenExplanation(String token) {
+		String known = TOKENS.get(token);
+		if (known != null) {
+			return known;
 		}
+		if (token.startsWith("\"")) {
+			return (token.length() >= 2 && token.endsWith("\""))
+					? "chaine de caracteres"
+					: "chaine non terminee (erreur lexicale)";
+		}
+		if (token.matches("\\d+")) {
+			return "nombre entier";
+		}
+		if (token.matches("\\d+\\.\\d+")) {
+			return "nombre reel";
+		}
+		if (token.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+			return "identificateur";
+		}
+		if (token.matches("\\d+[a-zA-Z_][a-zA-Z0-9_]*")) {
+			return "identificateur invalide (commence par un chiffre)";
+		}
+		return "inconnu (caractere non reconnu)";
 	}
 
 	public String tokenize(String input) {
 		StringBuilder result = new StringBuilder();
-		
-		String expreg = "\"[^\"]*\"|\\d+\\.\\d+|\\d+|[a-zA-Z][a-zA-Z0-9_]*|[<>!=#\\[\\],]";//expression reguliere
-
-		Pattern pattern = Pattern.compile(expreg);
-		Matcher matcher = pattern.matcher(input);
+		Matcher matcher = PATTERN.matcher(input);
 
 		while (matcher.find()) {
 			String token = matcher.group();
 
-			if (KEYWORDS.contains(token)) {
-				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
+			// Le contenu d'un commentaire n'est pas decoupe en tokens
+			if (token.startsWith("##")) {
+				token = "##";
 			}
 
-			else if (SYMBOLS.contains(token)) {
-				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
-			} else if (OPERATORS.contains(token)) {
-				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
-			} else {
-				result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
-			}
+			result.append(token).append(": ").append(getTokenExplanation(token)).append("\n");
 		}
 		return result.toString();
 	}
 }
-//Pattern.compile(String regex)
-//Compile une expression régulière sous forme de Pattern.
-//matcher(String input)
-//matcher.find() : À chaque fois qu'un token est trouvé :
-//Il est comparé avec les ensembles (KEYWORDS, SYMBOLS, OPERATORS).
-//L'explication est ajoutée à result via getTokenExplanation().
